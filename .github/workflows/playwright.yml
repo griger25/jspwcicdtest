@@ -38,14 +38,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Playwright HTML report artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: github-pages
-          path: ./playwright-report
-
       - name: Deploy GitHub Pages
         uses: actions/deploy-pages@v4
         with:
-          # указываем путь к папке с содержимым для деплоя
-          folder: ./playwright-report
+          artifact_name: github-pages
