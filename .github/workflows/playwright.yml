@@ -1,31 +1,38 @@
-name: Run Playwright tests and deploy report
+name: Playwright Tests
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  test-and-deploy:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+      - name: Установка зависимостей
+        run: npm ci
 
-      - name: Install dependencies
-        run: npm install
+      - name: Установка браузеров Playwright
+        run: npx playwright install --with-deps
 
-      - name: Run tests
+      - name: Запуск тестов с HTML-отчётом
         run: npx playwright test --reporter=html
 
-      - name: Deploy HTML report to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Загрузка HTML-отчёта
+        uses: actions/upload-pages-artifact@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./playwright-report
+          path: playwright-report
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Деплой в GitHub Pages
+        uses: actions/deploy-pages@v2
