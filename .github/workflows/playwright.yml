@@ -40,7 +40,6 @@ jobs:
 
       - name: Run Playwright tests
         run: |
-          mkdir -p playwright-report \
           npx playwright test --output=playwright-report \
             --reporter=html \
             --reporter=junit \
