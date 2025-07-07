@@ -3,6 +3,12 @@ name: Playwright Tests
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: 20
+  PLAYWRIGHT_BROWSERS_PATH: ./playwright-browsers
 
 permissions:
   contents: read
@@ -12,33 +18,65 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
 
       - name: Run Playwright tests
-        run: npx playwright test --reporter=html
+        run: |
+          npx playwright test \
+            --reporter=html \
+            --reporter=junit \
+            --workers=3
+        env:
+          CI: true
 
-      - name: Upload Playwright HTML report
+      - name: Upload HTML report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: github-pages
-          path: playwright-report
-          retention-days: 1
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload JUnit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-junit-results
+          path: playwright-results/
+          retention-days: 7
 
   deploy:
     needs: test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Deploy GitHub Pages
+      - name: Download HTML report
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+
+      - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: github-pages
+          artifact_name: playwright-report
+          target-branch: gh-pages
