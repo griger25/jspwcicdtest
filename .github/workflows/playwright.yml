@@ -47,12 +47,13 @@ jobs:
         env:
           CI: true
 
-      - name: Upload Playwright HTML report
+      - name: Upload HTML report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: github-pages
-          path: playwright-report
-          retention-days: 1
+          name: playwright-html-report
+          path: playwright-report/
+          retention-days: 7
 
       - name: Upload JUnit report
         uses: actions/upload-artifact@v4
@@ -67,35 +68,24 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Download HTML report
         uses: actions/download-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-html-report
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
-        with:
-          artifact_name: playwright-report
-          target-branch: gh-pages
-     # Single deploy job since we're just deploying
-  deploy2:
-    needs: test
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: 'playwright-report/'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
