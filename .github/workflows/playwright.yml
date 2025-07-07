@@ -40,10 +40,12 @@ jobs:
 
       - name: Run Playwright tests
         run: |
-          npx playwright test \
+          mkdir -p playwright-report \
+          npx playwright test --output=playwright-report \
             --reporter=html \
             --reporter=junit \
-            --workers=3
+            --workers=3 
+            
         env:
           CI: true
 
